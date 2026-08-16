@@ -1,0 +1,68 @@
+﻿using EcommerceAPI.Data;
+using EcommerceAPI.Models;
+using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualStudio.TestPlatform.TestHost;
+using System.Net;
+using System.Net.Http.Json;
+using Testcontainers.MsSql;
+
+namespace EcommerceAPI.Tests.IntegrationTests;
+
+public class ProductIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+{
+    private readonly WebApplicationFactory<Program> _factory;
+    private readonly MsSqlContainer _sqlContainer;
+
+    public ProductIntegrationTests()
+    {
+        _sqlContainer = new MsSqlBuilder()
+            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            .WithPassword("TestPassword123!")
+            .Build();
+        _sqlContainer.StartAsync().Wait();
+
+        _factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureServices(services =>
+                {
+                    var descriptor = services.SingleOrDefault(
+                        d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+                    if (descriptor != null)
+                        services.Remove(descriptor);
+
+                    services.AddDbContext<AppDbContext>(options =>
+                        options.UseSqlServer(_sqlContainer.GetConnectionString()));
+                });
+            });
+    }
+
+    [Fact]
+    public async Task CreateProduct_ShouldReturnCreated_WithValidData()
+    {
+        var client = _factory.CreateClient();
+        var request = new CreateProductDto
+        {
+            Name = "Integration Test Product",
+            Description = "Test",
+            Price = 1000,
+            StockQuantity = 10
+        };
+
+        var response = await client.PostAsJsonAsync("/api/Product", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var product = await response.Content.ReadFromJsonAsync<ProductDto>();
+        product.Should().NotBeNull();
+        product!.Name.Should().Be("Integration Test Product");
+    }
+
+    public void Dispose()
+    {
+        _sqlContainer.StopAsync().Wait();
+        _sqlContainer.DisposeAsync().AsTask().Wait();
+    }
+}

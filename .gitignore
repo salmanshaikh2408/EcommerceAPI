@@ -1,0 +1,8 @@
+# Visual Studio temp files
+.vs/
+.vscode/
+bin/
+obj/
+*.user
+*.log
+appsettings.Production.json

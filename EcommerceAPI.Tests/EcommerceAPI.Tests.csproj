@@ -10,6 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="IntegrationTests\OrderIntegrationTests.cs.ignore" />
+    <Compile Include="IntegrationTests\ProductIntegrationTests.cs.ignore" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.2.0" />
     <PackageReference Include="Azure.Identity" Version="1.21.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.2" />

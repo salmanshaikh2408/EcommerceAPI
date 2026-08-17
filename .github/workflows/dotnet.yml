@@ -30,7 +30,7 @@ jobs:
       with:
         dotnet-version: '8.0.x'
     
-    - name: Restore
+    - name: Restore dependencies
       run: dotnet restore
       working-directory: ./EcommerceAPI
     
@@ -38,12 +38,18 @@ jobs:
       run: dotnet build --no-restore
       working-directory: ./EcommerceAPI
     
-    - name: Unit Tests
-      run: dotnet test --filter "UnitTests" --no-build
+    - name: Apply Database Migrations
+      run: dotnet ef database update
+      working-directory: ./EcommerceAPI
+      env:
+        ConnectionStrings__DefaultConnection: "Server=localhost;Database=EcommerceDB;User Id=sa;Password=YourStrong!Password123;TrustServerCertificate=True;"
+    
+    - name: Run Unit Tests
+      run: dotnet test --filter "FullyQualifiedName~UnitTests" --no-build --verbosity normal
       working-directory: ./EcommerceAPI
     
-    - name: Integration Tests
-      run: dotnet test --filter "IntegrationTests" --no-build
+    - name: Run Integration Tests
+      run: dotnet test --filter "FullyQualifiedName~IntegrationTests" --no-build --verbosity normal
       working-directory: ./EcommerceAPI
       env:
         ConnectionStrings__DefaultConnection: "Server=localhost;Database=EcommerceDB;User Id=sa;Password=YourStrong!Password123;TrustServerCertificate=True;"

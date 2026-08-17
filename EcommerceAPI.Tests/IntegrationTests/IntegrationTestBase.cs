@@ -36,11 +36,33 @@ public class IntegrationTestBase : IClassFixture<WebApplicationFactory<Program>>
         Client = Factory.CreateClient();
     }
 
+    protected async Task EnsureAdminExistsAsync()
+    {
+        var registerRequest = new RegisterRequest
+        {
+            Username = "admin",
+            Password = "admin123",
+            Role = "Admin"
+        };
+        var response = await Client.PostAsJsonAsync("/api/Auth/register", registerRequest);
+
+        // Register 200 OK ya 400 (already exists) dono valid hain
+        if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+        {
+            // User already exists, fine
+            return;
+        }
+        response.EnsureSuccessStatusCode();
+    }
+
     protected async Task<string> GetAdminTokenAsync()
     {
+        // ✅ Pehle ensure karo ki admin exists kare
+        await EnsureAdminExistsAsync();
+
         var authRequest = new LoginRequest { Username = "admin", Password = "admin123" };
         var authResponse = await Client.PostAsJsonAsync("/api/Auth/login", authRequest);
-        authResponse.EnsureSuccessStatusCode(); // ✅ Ensure 200 OK
+        authResponse.EnsureSuccessStatusCode();
 
         var authResult = await authResponse.Content.ReadFromJsonAsync<AuthResponse>();
         return authResult!.Token;
@@ -55,4 +77,11 @@ public class IntegrationTestBase : IClassFixture<WebApplicationFactory<Program>>
 public class AuthResponse
 {
     public string Token { get; set; } = string.Empty;
+}
+
+public class RegisterRequest
+{
+    public string Username { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string? Role { get; set; }
 }

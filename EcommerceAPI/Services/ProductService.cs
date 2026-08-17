@@ -2,6 +2,7 @@
 using EcommerceAPI.Exceptions;
 using EcommerceAPI.Models;
 using EcommerceAPI.Repositories;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace EcommerceAPI.Services
 {
@@ -9,11 +10,13 @@ namespace EcommerceAPI.Services
     {
         private readonly IProductRepository _repository;
         private readonly IMapper _mapper;
+        private readonly IMemoryCache _cache;
 
-        public ProductService(IProductRepository repository, IMapper mapper)
+        public ProductService(IProductRepository repository, IMapper mapper, IMemoryCache cache)
         {
             _repository = repository;
             _mapper = mapper;
+            _cache = cache;
         }
 
         public List<ProductDto> GetAllProducts()
@@ -27,14 +30,34 @@ namespace EcommerceAPI.Services
             //    StockQuantity = p.StockQuantity,
             //    IsActive = p.IsActive
             //}).ToList();
+            string cacheKey = "all_products";
+
+            //Check if the products are already cached
+            if (_cache.TryGetValue(cacheKey, out List<ProductDto> cachedProducts))
+            {
+                return cachedProducts;
+            }
+
             var products = _repository.GetAllProducts();
-            return _mapper.Map<List<ProductDto>>(products);
+            var productDtos = _mapper.Map<List<ProductDto>>(products);
+
+            //Set cache options
+            _cache.Set(cacheKey, productDtos, TimeSpan.FromMinutes(5));
+            return productDtos;
         }
 
         public ProductDto? GetProductById(int id)
         {
+            string cacheKey = $"product_{id}";
+
+            //Check if the product is already cached
+            if(_cache.TryGetValue(cacheKey, out ProductDto? cachedProduct))
+            {
+                return cachedProduct;
+            }
+
             var product = _repository.GetProductById(id);
-            if (product == null) {return null; }
+            if (product == null) { return null; }
 
             //return new ProductDto
             //{
@@ -45,17 +68,20 @@ namespace EcommerceAPI.Services
             //    StockQuantity = product.StockQuantity,
             //    IsActive = product.IsActive
             //};
-            return _mapper.Map<ProductDto>(product);
+            var productDto = _mapper.Map<ProductDto>(product);
+
+            _cache.Set(cacheKey, productDto, TimeSpan.FromMinutes(5));
+            return productDto;
         }
 
         public ProductDto CreateProduct(CreateProductDto request)
         {
-            if(request.Price < 0)
+            if (request.Price < 0)
             {
                 throw new BadRequestException("Price must be greater than 0");
             }
 
-            if(request.StockQuantity < 0)
+            if (request.StockQuantity < 0)
             {
                 throw new BadRequestException("Stock quantity cannot be negative");
             }
@@ -80,12 +106,13 @@ namespace EcommerceAPI.Services
             //    StockQuantity = created.StockQuantity,
             //    IsActive = created.IsActive
             //};
+            _cache.Remove("all_products"); // Invalidate the cache for all products
             return _mapper.Map<ProductDto>(created);
         }
         public ProductDto UpdateProduct(int id, UpdateProductDto request)
         {
             var existing = _repository.GetProductById(id);
-            if(existing == null) { throw new NotFoundException($"Product with id {id} not found"); }
+            if (existing == null) { throw new NotFoundException($"Product with id {id} not found"); }
 
             _mapper.Map(request, existing);
 
@@ -105,6 +132,8 @@ namespace EcommerceAPI.Services
             //    StockQuantity = updated.StockQuantity,
             //    IsActive = updated.IsActive
             //};
+            _cache.Remove($"product_{id}"); // Invalidate the cache for this product
+            _cache.Remove("all_products"); // Invalidate the cache for all products
             return _mapper.Map<ProductDto>(updated);
         }
 
@@ -115,6 +144,6 @@ namespace EcommerceAPI.Services
 
             return _repository.DeleteProduct(id);
         }
-        
+
     }
 }

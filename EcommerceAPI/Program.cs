@@ -1,13 +1,15 @@
+using AutoMapper;
 using EcommerceAPI.Data;
+using EcommerceAPI.Mapping;
 using EcommerceAPI.Middlewares;
 using EcommerceAPI.Models;
 using EcommerceAPI.Repositories;
 using EcommerceAPI.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,9 +39,13 @@ builder.Services.AddAuthentication(options =>
 // Add services to the container.
 
 builder.Services.AddControllers();
-builder.Services.AddAutoMapper(typeof(Program));
+// AutoMapper manually register karo
+var config = new MapperConfiguration(cfg => cfg.AddProfile<AutoMapperProfile>());
+builder.Services.AddSingleton<IMapper>(new Mapper(config));
+
 var orderSettings = builder.Configuration.GetSection("OrderSettings").Get<OrderSettings>();
 builder.Services.AddSingleton(orderSettings);
+
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();

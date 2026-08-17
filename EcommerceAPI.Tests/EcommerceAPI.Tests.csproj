@@ -15,7 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="16.2.0" />
+    <PackageReference Include="AutoMapper" Version="12.0.1" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
     <PackageReference Include="Azure.Identity" Version="1.21.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
     <PackageReference Include="FluentAssertions" Version="6.12.1" />

@@ -46,8 +46,25 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
 //Database connection string
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Agar Local Windows me chal rahe ho (GitHub Actions nahi)
+if (OperatingSystem.IsWindows() && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS")))
+{
+    // Windows Authentication switch karo (sa password hatao)
+    connectionString = connectionString
+        .Replace("User Id=sa;Password=12345;", "")
+        .Replace("User Id=sa;Password=12345;", ""); // Double safety
+
+    // Agar connection string me Trusted_Connection nahi hai toh add karo
+    if (!connectionString.Contains("Trusted_Connection"))
+    {
+        connectionString += "Trusted_Connection=True;";
+    }
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

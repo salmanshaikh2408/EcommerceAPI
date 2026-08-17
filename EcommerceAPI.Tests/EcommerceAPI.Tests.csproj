@@ -10,8 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="IntegrationTests\OrderIntegrationTests.cs.ignore" />
-    <Compile Include="IntegrationTests\ProductIntegrationTests.cs.ignore" />
+    <None Include="IntegrationTests\OrderIntegrationTests.cs" />
+    <None Include="IntegrationTests\ProductIntegrationTests.cs" />
   </ItemGroup>
 
   <ItemGroup>

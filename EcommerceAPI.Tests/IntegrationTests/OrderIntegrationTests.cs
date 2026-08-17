@@ -17,7 +17,7 @@ public class OrderIntegrationTests : IClassFixture<WebApplicationFactory<Program
 	public OrderIntegrationTests()
 	{
 		// Real SQL Server connection string
-		var connectionString = "Server=localhost;Database=EcommerceDB;User Id=sa;Password=12345;TrustServerCertificate=True;";
+		var connectionString = "Server=localhost;Database=EcommerceDB;User Id=sa;Password=YourStrong!Password123;TrustServerCertificate=True;";
 
 		_factory = new WebApplicationFactory<Program>()
 			.WithWebHostBuilder(builder =>

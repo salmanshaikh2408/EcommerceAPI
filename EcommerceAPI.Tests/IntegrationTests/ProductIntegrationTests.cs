@@ -16,7 +16,7 @@ public class ProductIntegrationTests : IClassFixture<WebApplicationFactory<Progr
 	public ProductIntegrationTests()
 	{
 		// Real SQL Server connection string (Local / GitHub Actions / Docker)
-		var connectionString = "Server=localhost;Database=EcommerceDB;User Id=sa;Password=12345;TrustServerCertificate=True;";
+		var connectionString = "Server=localhost;Database=EcommerceDB;User Id=sa;Password=YourStrong!Password123;TrustServerCertificate=True;";
 
 		_factory = new WebApplicationFactory<Program>()
 			.WithWebHostBuilder(builder =>

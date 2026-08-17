@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 namespace EcommerceAPI.Tests.IntegrationTests;
@@ -13,10 +14,11 @@ namespace EcommerceAPI.Tests.IntegrationTests;
 public class OrderIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 {
 	private readonly WebApplicationFactory<Program> _factory;
+	private readonly HttpClient _client;
+	private readonly string _adminToken;
 
 	public OrderIntegrationTests()
 	{
-		// Real SQL Server connection string
 		var connectionString = "Server=localhost;Database=EcommerceDB;User Id=sa;Password=YourStrong!Password123;TrustServerCertificate=True;";
 
 		_factory = new WebApplicationFactory<Program>()
@@ -33,51 +35,54 @@ public class OrderIntegrationTests : IClassFixture<WebApplicationFactory<Program
 						options.UseSqlServer(connectionString));
 				});
 			});
+
+		_client = _factory.CreateClient();
+
+		// ✅ Admin token generate karo
+		var authRequest = new LoginRequest { Username = "admin", Password = "admin123" };
+		var authResponse = _client.PostAsJsonAsync("/api/Auth/login", authRequest).Result;
+		var authResult = authResponse.Content.ReadFromJsonAsync<AuthResponse>().Result;
+		_adminToken = authResult!.Token;
+
+		// ✅ Token set karo
+		_client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _adminToken);
 	}
 
 	[Fact]
 	public async Task CreateOrder_ShouldReturnCreated_WithValidData()
 	{
-		// Arrange
-		var client = _factory.CreateClient();
 		var request = new OrderRequest
 		{
 			ProductName = "Integration Test Mouse",
 			Quantity = 2
 		};
 
-		// Act
-		var response = await client.PostAsJsonAsync("/api/Order", request);
+		var response = await _client.PostAsJsonAsync("/api/Order", request);
 
-		// Assert
 		response.StatusCode.Should().Be(HttpStatusCode.Created);
 
 		var order = await response.Content.ReadFromJsonAsync<OrderDto>();
 		order.Should().NotBeNull();
 		order!.ProductName.Should().Be("Integration Test Mouse");
 		order.Quantity.Should().Be(2);
-		order.Status.Should().Be("Pending"); // Default status
+		order.Status.Should().Be("Pending");
 	}
 
 	[Fact]
 	public async Task GetOrderById_ShouldReturnOrder_WithValidId()
 	{
-		// Arrange
-		var client = _factory.CreateClient();
-
 		// Pehle order create karo
 		var createRequest = new OrderRequest
 		{
 			ProductName = "Test Laptop",
 			Quantity = 1
 		};
-		var createResponse = await client.PostAsJsonAsync("/api/Order", createRequest);
+		var createResponse = await _client.PostAsJsonAsync("/api/Order", createRequest);
 		var createdOrder = await createResponse.Content.ReadFromJsonAsync<OrderDto>();
 
-		// Act
-		var response = await client.GetAsync($"/api/Order/{createdOrder!.Id}");
+		// Ab GetById call karo
+		var response = await _client.GetAsync($"/api/Order/{createdOrder!.Id}");
 
-		// Assert
 		response.StatusCode.Should().Be(HttpStatusCode.OK);
 		var order = await response.Content.ReadFromJsonAsync<OrderDto>();
 		order.Should().NotBeNull();

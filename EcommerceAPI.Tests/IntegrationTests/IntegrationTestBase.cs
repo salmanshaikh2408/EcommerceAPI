@@ -1,5 +1,7 @@
-﻿using EcommerceAPI.Controllers;
+﻿using AutoMapper;
+using EcommerceAPI.Controllers;
 using EcommerceAPI.Data;
+using EcommerceAPI.Mapping;
 using EcommerceAPI.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +34,8 @@ public class IntegrationTestBase : IClassFixture<WebApplicationFactory<Program>>
                         options.UseSqlServer(connectionString));
                 });
             });
+
+        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<AutoMapperProfile>()).CreateMapper();
 
         Client = Factory.CreateClient();
     }

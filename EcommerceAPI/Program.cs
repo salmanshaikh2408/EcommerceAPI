@@ -40,9 +40,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddControllers();
 // AutoMapper manually register karo
-//var config = new MapperConfiguration(cfg => cfg.AddProfile<AutoMapperProfile>());
-//builder.Services.AddSingleton<IMapper>(new Mapper(config));
-builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
+builder.Services.AddSingleton<IMapper>(new MapperConfiguration(cfg => cfg.AddProfile<AutoMapperProfile>()).CreateMapper());
 
 var orderSettings = builder.Configuration.GetSection("OrderSettings").Get<OrderSettings>();
 builder.Services.AddSingleton(orderSettings);

@@ -19,7 +19,7 @@ public class ProductServiceTests
     {
         _mockRepo = new Mock<IProductRepository>();
         _mockMapper = new Mock<IMapper>();
-        _service = new ProductService(_mockRepo.Object);
+        _service = new ProductService(_mockRepo.Object,_mockMapper.Object);
     }
 
     [Fact]

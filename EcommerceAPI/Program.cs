@@ -37,6 +37,7 @@ builder.Services.AddAuthentication(options =>
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddAutoMapper(typeof(Program));
 var orderSettings = builder.Configuration.GetSection("OrderSettings").Get<OrderSettings>();
 builder.Services.AddSingleton(orderSettings);
 builder.Services.AddScoped<IOrderService, OrderService>();
@@ -103,7 +104,7 @@ builder.Services.AddSwaggerGen
 
 //Global error handling middleware
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-
+builder.Services.AddMemoryCache();
 var app = builder.Build();
 
 app.UseExceptionHandler(exceptionHandlerApp => { });

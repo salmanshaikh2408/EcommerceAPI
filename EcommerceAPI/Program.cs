@@ -51,6 +51,14 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
+// Redis Cache Register
+var redisConnection = builder.Configuration.GetConnectionString("RedisConnection");
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = redisConnection;
+    options.InstanceName = "EcommerceAPI";
+});
+
 //Database connection string
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 

@@ -22,6 +22,12 @@ jobs:
           --health-timeout=5s
           --health-retries=10
 
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: --name=ecommerce-redis-test
+
     steps:
     - uses: actions/checkout@v3
     
@@ -57,3 +63,4 @@ jobs:
       working-directory: ./EcommerceAPI
       env:
         ConnectionStrings__DefaultConnection: "Server=localhost;Database=EcommerceDB;User Id=sa;Password=YourStrong!Password123;TrustServerCertificate=True;"
+        ConnectionStrings__RedisConnection: "redis:6379"

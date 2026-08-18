@@ -4,6 +4,7 @@ using EcommerceAPI.Models;
 using EcommerceAPI.Repositories;
 using EcommerceAPI.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using Xunit;
@@ -14,14 +15,14 @@ public class ProductServiceTests
 {
     private readonly Mock<IProductRepository> _mockRepo;
     private readonly Mock<IMapper> _mockMapper;
-    private readonly Mock<IMemoryCache> _mockCache;
+    private readonly Mock<IDistributedCache> _mockCache;
     private readonly ProductService _service;
 
     public ProductServiceTests()
     {
         _mockRepo = new Mock<IProductRepository>();
         _mockMapper = new Mock<IMapper>();
-        _mockCache = new Mock<IMemoryCache>();
+        _mockCache = new Mock<IDistributedCache>();
         _service = new ProductService(_mockRepo.Object,_mockMapper.Object, _mockCache.Object);
     }
 

@@ -8,3 +8,9 @@ services:
       - SA_PASSWORD=YourStrong!Password123
     ports:
       - "1433:1433"
+
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce-redis-test
+    ports:
+      - "6379:6379"

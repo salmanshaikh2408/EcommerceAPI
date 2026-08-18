@@ -2,7 +2,9 @@
 using EcommerceAPI.Exceptions;
 using EcommerceAPI.Models;
 using EcommerceAPI.Repositories;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
+using System.Text.Json;
 
 namespace EcommerceAPI.Services
 {
@@ -10,9 +12,9 @@ namespace EcommerceAPI.Services
     {
         private readonly IProductRepository _repository;
         private readonly IMapper _mapper;
-        private readonly IMemoryCache _cache;
+        private readonly IDistributedCache _cache;
 
-        public ProductService(IProductRepository repository, IMapper mapper, IMemoryCache cache)
+        public ProductService(IProductRepository repository, IMapper mapper, IDistributedCache cache)
         {
             _repository = repository;
             _mapper = mapper;
@@ -33,31 +35,59 @@ namespace EcommerceAPI.Services
             string cacheKey = "all_products";
 
             //Check if the products are already cached
-            if (_cache.TryGetValue(cacheKey, out List<ProductDto> cachedProducts))
+            //if (_cache.TryGetValue(cacheKey, out List<ProductDto> cachedProducts))  //Memory Cache code
+            //{
+            //    return cachedProducts;
+            //}
+
+            //var products = _repository.GetAllProducts();
+            //var productDtos = _mapper.Map<List<ProductDto>>(products);
+
+            ////Set cache options
+            //_cache.Set(cacheKey, productDtos, TimeSpan.FromMinutes(5));
+            //return productDtos;
+
+            // 1. Redis se check karo
+            var cached = _cache.GetString(cacheKey);
+
+            if (!string.IsNullOrEmpty(cached))
             {
-                return cachedProducts;
+                return JsonSerializer.Deserialize<List<ProductDto>>(cached)!;
             }
 
+            // 2. Database se fetch karo
             var products = _repository.GetAllProducts();
-            var productDtos = _mapper.Map<List<ProductDto>>(products);
+            var dtos =  _mapper.Map<List<ProductDto>>(products);
 
-            //Set cache options
-            _cache.Set(cacheKey, productDtos, TimeSpan.FromMinutes(5));
-            return productDtos;
+            // 3. Redis mein save karo (5 minutes)
+            _cache.SetString(cacheKey,JsonSerializer.Serialize(dtos), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) });
+            return dtos;
+
         }
 
         public ProductDto? GetProductById(int id)
         {
             string cacheKey = $"product_{id}";
 
-            //Check if the product is already cached
-            if(_cache.TryGetValue(cacheKey, out ProductDto? cachedProduct))
+            var cached = _cache.GetString(cacheKey);
+            if (!string.IsNullOrEmpty(cached))
             {
-                return cachedProduct;
+                return JsonSerializer.Deserialize<ProductDto>(cached)!;
             }
 
             var product = _repository.GetProductById(id);
-            if (product == null) { return null; }
+            var dtos = _mapper.Map<ProductDto>(product);
+
+            _cache.SetString(cacheKey, JsonSerializer.Serialize(dtos), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) });
+            return dtos;
+            //Check if the product is already cached
+            //if(_cache.TryGetValue(cacheKey, out ProductDto? cachedProduct))  //Memory cache code
+            //{
+            //    return cachedProduct;
+            //}
+
+            //var product = _repository.GetProductById(id);
+            //if (product == null) { return null; }
 
             //return new ProductDto
             //{
@@ -68,10 +98,10 @@ namespace EcommerceAPI.Services
             //    StockQuantity = product.StockQuantity,
             //    IsActive = product.IsActive
             //};
-            var productDto = _mapper.Map<ProductDto>(product);
+            //var productDto = _mapper.Map<ProductDto>(product);
 
-            _cache.Set(cacheKey, productDto, TimeSpan.FromMinutes(5));
-            return productDto;
+            //_cache.Set(cacheKey, productDto, TimeSpan.FromMinutes(5));
+            //return productDto;
         }
 
         public ProductDto CreateProduct(CreateProductDto request)

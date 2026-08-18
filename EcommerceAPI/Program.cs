@@ -52,7 +52,7 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
 // Redis Cache Register
-var redisConnection = builder.Configuration.GetConnectionString("RedisConnection");
+var redisConnection = builder.Configuration.GetConnectionString("RedisConnection") ?? "localhost:6379";
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = redisConnection;
